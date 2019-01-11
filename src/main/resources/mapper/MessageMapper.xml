@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ihzsr.mweb.dao.MessageDao">
+	
+	<resultMap type="History" id="history">
+		
+		<result column="tt" property="x"/>
+		<result column="sort" property="y"/>
+
+	</resultMap>
+	
+	<resultMap id="BaseResultMessageMap"
+			   type="com.ihzsr.mweb.bean.Messages">
+		<result column="host_id" property="hostId" jdbcType="INTEGER"/>
+		<result column="data_save_time" property="dataSaveTime" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+		<result column="cpu_model" property="cpuModel" jdbcType="VARCHAR"/>
+		<result column="cpu_number" property="cpuNumber" jdbcType="INTEGER"/>
+		<result column="cpu_core_number" property="cpu_core_number" jdbcType="INTEGER"/>
+		<result column="cpu_usage_rate" property="cpuUsageRate" jdbcType="DOUBLE"/>
+		<result column="memory_usage_rate" property="memoryUsageRate" jdbcType="DOUBLE"/>
+		<result column="disk_usage_rate" property="diskUsageRate" jdbcType="DOUBLE"/>
+		<result column="memory_capacity" property="memoryCapacity" jdbcType="DOUBLE"/>
+		<result column="disk_capacity" property="diskCapacity" jdbcType="DOUBLE"/>
+		<result column="server_runtime" property="serverRuntime" jdbcType="VARCHAR"/>
+		<result column="server_version" property="serverVersion" jdbcType="VARCHAR"/>
+		<result column="server_intranet_ip" property="intranetIP" jdbcType="INTEGER"/>
+		<result column="server_load_average" property="loadAverage" jdbcType="VARCHAR"/>
+	</resultMap>
+	
+	<insert id="add" parameterType="com.ihzsr.mweb.bean.Messages">
+		insert into hzsr_ssm_monitor_data
+		(host_id,data_save_time,cpu_usage_rate,memory_usage_rate,disk_usage_rate,server_runtime,
+		 server_load_average)
+		values
+			(#{hostId},#{dataSaveTime},#{cpuUsageRate},#{memoryUsageRate},#{diskUsageRate},
+			 #{serverVersion},#{loadAverage});
+	</insert>
+	
+	<insert id="addServerInfo">
+		insert ignore into hzsr_ssm_svrhost (company_id,server_intranet_ip,cpu_model,cpu_number,cpu_core_number,
+											 memory_capacity,disk_capacity,server_version)
+		VALUES
+			(#{companyId},INET_ATON(#{intranetIP}),#{cpuModel},
+			 #{cpuNumber},#{cpuCoreNumber},#{memoryCapacity},#{diskCapacity},#{serverVersion});
+	</insert>
+	
+	<select id="queryCompanyId">
+		select company_id
+		from hzsr_ssm_company
+		where company_code=#{companyCode}
+	</select>
+	
+	<select id="queryHostId">
+		select host_id
+		from hzsr_ssm_svrhost
+		where company_id=#{companyId}
+	</select>
+	
+	<insert id="addData">
+		insert into hzsr_ssm_monitor_data
+				values (#{companyId},#{saveTime},#{cpuUsageRate},#{memoryUsageRate},
+						#{diskUsageRate},#{serverIp},#{loadAverage});
+	</insert>
+	
+	<insert id="addTest">
+		insert IGNORE into hzsr_ssm_svrhost 
+			(company_id,server_ip,cpu_model,cpu_number,cpu_core_number,memory_capacity,disk_capacity,server_version)
+		VALUES 
+			(#{companyId},INET_ATON(#{serverIp}),#{cpuModel},#{cpuNumber},#{cpuCoreNumber},
+				#{memoryCapacity},#{diskCapacity},#{serverVersion})
+	</insert>
+	
+	<select id="queryAllMessage" parameterType="java.lang.String" resultType="com.ihzsr.mweb.bean.Messages">
+        select
+        	
+        	data_save_time,cpu_usage_rate,memory_usage_rate,
+			disk_usage_rate,server_runtime,server_ip,server_load_average
+        	
+        from
+        
+        	hzsr_ssm_monitor_data
+        	
+        where
+        
+        	host_id=#{hostId}
+        	
+        order by
+        		
+        	time desc
+        
+        limit
+        
+        	1
+    </select>
+    
+    <delete id="deleteMessage" parameterType="java.lang.String">
+		delete from
+		
+			message_${companyCode}
+			
+		where
+		
+			ipAddress = #{ip}
+	</delete>
+
+	<select id="queryHistory" parameterType="java.lang.String" resultMap="history">
+		SELECT DATE_FORMAT(FLOOR(TIME/${frequency})*${frequency},'%Y-%m-%d %H:%i') tt,AVG(${sort}) sort
+		FROM message_${companyCode}
+		WHERE message_id>=
+		(SELECT message_id FROM message_${companyCode} WHERE TIME>=DATE_SUB(NOW(),INTERVAL ${day} DAY) LIMIT 1) AND ipAddress = #{ip}
+		GROUP BY tt;
+    </select>
+	
+	<delete id="deleteMessagesOneMonthAgo">
+        DELETE FROM message_HZSR01 WHERE time &lt;= DATE_SUB(NOW(),INTERVAL 1 MONTH);
+	</delete>
+</mapper>

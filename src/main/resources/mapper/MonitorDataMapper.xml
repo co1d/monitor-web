@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ihzsr.mweb.dao.MonitorDataDao">
+    
+    <resultMap id="MonitorDataResultMap"
+               type="com.ihzsr.mweb.bean.MonitorDataBean">
+        <id column="host_id" property="hostId" jdbcType="INTEGER"/>
+        <result column="data_save_time" property="dataSaveTime" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+        <result column="cpu_usage_rate" property="cpuUsageRate" jdbcType="DOUBLE"/>
+        <result column="memory_usage_rate" property="memoryUsageRate" jdbcType="DOUBLE"/>
+        <result column="disk_usage_rate" property="diskUsageRate" jdbcType="DOUBLE"/>
+        <result column="server_runtime" property="serverRuntime" jdbcType="VARCHAR"/>
+        <result column="server_version" property="serverVersion" jdbcType="VARCHAR"/>
+        <result column="server_load_average" property="loadAverage" jdbcType="VARCHAR"/>
+        <association property="HostBean" javaType="com.ihzsr.mweb.bean.HostBean" column="host_id"
+                     select="getHostInfo"/>
+    </resultMap>
+    
+    <select id="getHostInfo" parameterType="java.lang.Integer" resultType="com.ihzsr.mweb.bean.HostBean">
+        select host_id,company_id,server_intranet_ip,cpu_model,cpu_number,cpu_core_number,
+                memory_capacity,disk_capacity,server_version
+        where 
+               host_id=#{hostId}
+    </select>
+    
+    <insert id="saveData">
+        REPLACE into hzsr_ssm_svrhost (company_id,server_intranet_ip,cpu_model,cpu_number,cpu_core_number,
+                memory_capacity,disk_capacity,server_version)
+            VALUES
+        ((SELECT company_id from hzsr_ssm_company where company_code=#{companyCode}),INET_ATON(#{intranetIP}),
+            #{cpuModel},#{cpuNumber},#{cpuCoreNumber},#{memoryCapacity},#{diskCapacity},#{serverVersion});
+        insert into hzsr_ssm_monitor_data 
+              (host_id,data_save_time,cpu_usage_rate,memory_usage_rate,disk_usage_rate,server_runtime,
+              server_load_average)
+        values 
+              (#{hostId},#{dataSaveTime},#{cpuUsageRate},#{memoryUsageRate},#{diskUsageRate},
+              #{serverVersion},#{loadAverage});
+    </insert>
+
+    <insert id="add" parameterType="com.ihzsr.mweb.bean.Messages">
+		insert into hzsr_ssm_monitor_data
+		(host_id,data_save_time,cpu_usage_rate,memory_usage_rate,disk_usage_rate,server_runtime,
+		 server_load_average)
+		values
+			(#{hostId},#{dataSaveTime},#{cpuUsageRate},#{memoryUsageRate},#{diskUsageRate},
+			 #{serverRuntime},#{loadAverage});
+	</insert>
+
+    <insert id="saveHostInfo">
+		insert into hzsr_ssm_svrhost (company_id,server_intranet_ip,cpu_model,cpu_number,cpu_core_number,
+											 memory_capacity,disk_capacity,server_version)
+		VALUES
+			(#{companyCode},INET_ATON(#{intranetIP}),#{cpuModel},
+			 #{cpuNumber},#{cpuCoreNumber},#{memoryCapacity},#{diskCapacity},#{serverVersion})
+		ON DUPLICATE KEY UPDATE
+            cpu_model=VALUES(cpu_model),cpu_number=VALUES(cpu_number),
+            cpu_core_number=VALUES(cpu_core_number),memory_capacity=VALUES(memory_capacity),
+            disk_capacity=VALUES(disk_capacity),server_version=VALUES(server_version)
+	</insert>
+
+    <select id="queryCompanyId" resultType="java.lang.Integer">
+		select company_id
+		from hzsr_ssm_company
+		where company_code=#{companyCode}
+	</select>
+
+    <select id="queryHostId" resultType="java.lang.Integer">
+		select host_id
+		from hzsr_ssm_svrhost
+		where company_id=#{companyId} and server_intranet_ip=inet_aton(#{intranetIP})
+	</select>
+</mapper>

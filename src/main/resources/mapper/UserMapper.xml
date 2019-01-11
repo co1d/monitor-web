@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ihzsr.mweb.dao.UserDao">
+
+	<select id="queryByUserName" parameterType="java.lang.String" resultType="com.ihzsr.mweb.bean.User">
+        select * from
+        
+        	hzsr_ssm_userinfo
+        	
+        where 
+        
+        	user_name = #{userName};
+    </select>
+	
+    <insert id="saveUserInfo" parameterType="com.ihzsr.mweb.bean.User">
+		insert into hzsr_ssm_userinfo
+			(user_name,user_password)
+		values 
+			(#{userName},#{userPassword});
+		
+	</insert>
+	
+	<select id="queryUserId" parameterType="java.lang.String" resultType="java.lang.Integer">
+		select user_id 
+			from hzsr_ssm_userinfo
+		where 
+			user_name=#{userName};
+	</select>
+	
+	<insert id="saveCompanyInfo">
+		insert into hzsr_ssm_company
+			(user_id,company_code,company_name)
+		values 
+			(#{userId},#{companyCode},#{companyName});
+	</insert>
+	
+	<select id="queryCompanyId" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select 
+        	company_id
+        from 
+        	hzsr_ssm_company c
+        left join 
+        	hzsr_ssm_userinfo as u
+		on
+			u.user_id=c.user_id
+		where
+			u.user_name=#{userName}
+    </select>
+</mapper>

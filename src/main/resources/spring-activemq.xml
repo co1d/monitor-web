@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:amq="http://activemq.apache.org/schema/core"
+       xmlns:jms="http://www.springframework.org/schema/jms"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-4.3.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+     	http://www.springframework.org/schema/jms
+     	http://www.springframework.org/schema/jms/spring-jms-4.3.xsd
+     	http://activemq.apache.org/schema/core
+     	http://activemq.apache.org/schema/core/activemq-core-5.7.0.xsd">
+
+    <context:component-scan base-package="com.ihzsr.mweb.activemq" />
+    <mvc:annotation-driven />
+
+    <bean id="jmsTemplate"
+          class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory"
+                  ref="connectionFactory"/>
+    </bean>
+    
+    <bean id="targetConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="tcp://47.106.240.57:61616"/>
+        <property name="userName" value="admin"/>
+        <property name="password" value="admin"/>
+    </bean>
+    
+    <bean id="connectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+        <property name="targetConnectionFactory" ref="targetConnectionFactory"/>
+    </bean>
+    
+    <bean id="queueDestination" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg index="0" value="monitor.system.queue" />
+    </bean>
+    
+    <bean id="messageReceiverListener" class="com.ihzsr.mweb.activemq.MessageReceiverListener"/>
+    
+    <bean id="jmsContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory" />
+        <property name="destination" ref="queueDestination" />
+        <property name="subscriptionDurable" value="true"/>
+        <property name="messageListener" ref="messageReceiverListener" />
+        <property name="concurrency" value="10-15"/>
+    </bean>
+
+    <bean id="sendMail" class="com.ihzsr.mweb.util.SendMail"/>
+    
+    <!--<amq:connectionFactory id="amqConnectionFactory"
+        brokerURL="tcp://test4.ihzsr.cn:61616" userName="admin" password="admin"/>
+    &lt;!&ndash; 配置connectionFactory &ndash;&gt;
+    <bean id="connectionFactory"
+        class="org.springframework.jms.connection.CachingConnectionFactory">
+        &lt;!&ndash; 目标ConnectionFactory 引用至 amqConnectionFactory&ndash;&gt;
+        <constructor-arg ref="amqConnectionFactory" />
+        &lt;!&ndash; Session缓存数量 &ndash;&gt;
+        <property name="sessionCacheSize" value="100" />
+        <property name="clientId" value="syxConsumer1"/>
+    </bean>
+
+    <bean id="jmsTemplate"
+          class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory"
+                  ref="connectionFactory"/>
+        <property name="defaultDestination"
+                  ref="destination"/>
+        <property name="messageConverter">
+            <bean class="org.springframework.jms.support.converter.SimpleMessageConverter"/>
+        </property>
+    </bean>
+
+    &lt;!&ndash; 消息监听容器 &ndash;&gt;  
+    <bean id="destination"  class="org.apache.activemq.command.ActiveMQQueue">   
+         &lt;!&ndash; 设置消息队列的名字 &ndash;&gt; 
+        <constructor-arg index="0" value="monitor.system.queue" /> 
+    </bean>
+     
+    <bean id="listenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">     
+        <property name="connectionFactory" ref="connectionFactory" /> 
+        <property name="pubSubDomain" value="true"/>&lt;!&ndash; default is false &ndash;&gt;   
+        <property name="destination" ref="destination" />  &lt;!&ndash; listen topic: syxTopic &ndash;&gt;   
+        <property name="subscriptionDurable" value="true"/>    
+        <property name="messageListener" ref="messageReceiverListener" />&lt;!&ndash; 消息监听类 &ndash;&gt;   	
+        &lt;!&ndash; 监听并行区间范围 最小10个 最大15个 &ndash;&gt;
+        <property name="concurrency" value="10-15"/> 
+    </bean>
+
+    &lt;!&ndash;配置邮件接口&ndash;&gt;
+    <bean id="sendMail" class="com.ihzsr.mweb.util.SendMail"/>-->
+</beans>

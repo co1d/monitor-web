@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ihzsr.mweb.dao.RecordDao">
+	
+	<resultMap type="Record" id="record">
+		
+		<result column="record_id" property="id"/>
+		<result column="ip" property="ip"/>
+		<result column="time" property="time"/>
+		<result column="type" property="type"/>
+		<result column="text" property="text"/>
+
+	</resultMap>
+	
+	<insert id="add" parameterType="com.ihzsr.mweb.bean.Record">
+		insert into
+		
+			record_${companyCode}(ip, time, type, text)
+			
+		values
+		
+			(#{ip}, #{time}, #{type}, #{text})
+	</insert>
+	
+	<select id="queryAllRecord" parameterType="java.lang.String" resultMap="record">
+        select
+        
+        	record_id, ip, time, type, text
+        
+        from
+        
+        	record_${companyCode}
+        	
+        where 
+        
+        	ip = #{ip}
+    </select>
+    
+    <delete id="delete" parameterType="java.lang.String">
+		delete from
+		
+			record_${companyCode}
+			
+		where
+		
+			record_id = #{id}
+	</delete>
+
+</mapper>
